@@ -16,37 +16,37 @@ class MusicHandler:
       self.__skipFlag = False
       self.__backFlag = False
 
-   async def setBackFlag(self, flag: bool):
+   def setBackFlag(self, flag: bool):
       self.__backFlag = flag
 
-   async def isBackFlag(self):
+   def isBackFlag(self):
       return self.__backFlag
    
-   async def setSkipFlag(self, flag: bool):
+   def setSkipFlag(self, flag: bool):
       self.__skipFlag = flag
 
-   async def isSkipFlag(self):
+   def isSkipFlag(self):
       return self.__skipFlag
    
    async def setStopFlag(self, flag: bool):
       self.__stopFlag = flag
 
-   async def isStopFlag(self):
+   def isStopFlag(self):
       return self.__stopFlag
 
    async def addTrack(self, track: Track):
       self.__queue.append(track)
 
-   async def isQueueEmpty(self):
+   def isQueueEmpty(self):
       return len(self.__queue) == 0
    
-   async def isHistoryEmpty(self):
+   def isHistoryEmpty(self):
       return len(self.__history) == 0
    
-   async def sizeQueue(self):
+   def sizeQueue(self):
       return len(self.__queue)
 
-   async def sizeHistory(self):
+   def sizeHistory(self):
       return len(self.__history)
    
    async def getCurrentTrack(self):
@@ -73,7 +73,7 @@ class MusicHandler:
       if self.__current_track is not None:
          self.__queue.append(self.__current_track)
 
-      self.__current_track = self.__queue.pop()
+      self.__current_track = self.__history.pop()
       return self.__current_track
    
    async def isValidUrl(self, url: str):
@@ -101,17 +101,17 @@ class MusicHandler:
          return track
 
    async def player(self, voice):
-      if await self.isBackFlag():
-         await self.setBackFlag(False)
+      if self.__backFlag:
+         self.__backFlag = False
 
-         if await self.isHistoryEmpty():
+         if self.isHistoryEmpty():
             return
 
          await self.updateWorkingStreamLink(await self.getBackTrack())
 
 
-      if await self.isSkipFlag():
-         await self.setSkipFlag(False)
+      if self.__skipFlag:
+         self.__skipFlag = False
          if await self.isQueueEmpty():
             return
 
