@@ -12,6 +12,7 @@ YDL_OPTIONS = {
     'noplaylist': True,
     'quiet': True,
     'nocheckcertificate': True,
+    'verbose': True,
     'ignoreerrors': True, 
     'cachedir': False,
     "http_headers": {
