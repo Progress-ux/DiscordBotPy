@@ -22,6 +22,7 @@ class PlayCommand(commands.Cog):
       guild_id = interaction.guild.id
 
       musicHandler = await self.bot.getMusicHandler(guild_id)
+      await musicHandler.setStopFlag(False)
 
       if not await musicHandler.isValidUrl(url):
          await interaction.followup.send(content="Incorrect video link", ephemeral=True)

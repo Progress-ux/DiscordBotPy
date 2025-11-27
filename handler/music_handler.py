@@ -1,6 +1,6 @@
 from collections import deque
 from .track import Track
-from .config import YDL_OPTIONS
+from .config import YDL_OPTIONS, FFMPEG_OPTIONS
 import re
 import yt_dlp
 import asyncio
@@ -55,11 +55,25 @@ class MusicHandler:
       return self.__current_track
 
    async def getNextTrack(self):
+      if not self.__queue:
+         self.__current_track = None
+         return None
+      
+      if self.__current_track is not None:
+         self.__history.append(self.__current_track)
+
       self.__current_track = self.__queue.popleft()
       return self.__current_track
    
    async def getBackTrack(self):
-      self.__current_track = self.__history.popleft()
+      if not self.__history:
+         self.__current_track = None
+         return None
+      
+      if self.__current_track is not None:
+         self.__queue.append(self.__current_track)
+
+      self.__current_track = self.__queue.pop()
       return self.__current_track
    
    async def isValidUrl(self, url: str):
@@ -94,29 +108,23 @@ class MusicHandler:
             return
 
          await self.updateWorkingStreamLink(await self.getBackTrack())
-         self.__queue.appendleft(self.__current_track)
+
 
       if await self.isSkipFlag():
          await self.setSkipFlag(False)
-
          if await self.isQueueEmpty():
             return
 
          await self.updateWorkingStreamLink(await self.getNextTrack())
-         self.__history.appendleft(self.__current_track)
-
-      else:
-         if await self.isQueueEmpty():
-            return
-
-         await self.updateWorkingStreamLink(await self.getNextTrack())
-         self.__history.appendleft(self.__current_track)
 
       await self.__playTrack(track=await self.getCurrentTrack(), voice=voice)
 
 
    async def __playTrack(self, track: Track, voice):
-      source = discord.FFmpegPCMAudio(track.getStreamUrl())
-      voice.play(source, after=lambda e: asyncio.run_coroutine_threadsafe(
-         self.player(voice), self.bot.loop
-      ) if voice and voice.is_connected() else None)
+      try:
+         source = discord.FFmpegPCMAudio(track.getStreamUrl(), **FFMPEG_OPTIONS)
+         voice.play(source, after=lambda e: asyncio.run_coroutine_threadsafe(
+            self.player(voice), self.bot.loop
+         ) if voice and voice.is_connected() and not self.__stopFlag else None)
+      except Exception as e:
+         print(f"Error: {e}")

@@ -7,7 +7,6 @@ from handler.music_handler import MusicHandler
 class Bot(commands.Bot):
    def __init__(self):
       super().__init__(command_prefix="!", intents=discord.Intents.all())
-      self.event(self.on_ready)
       self.__musicHandlers = {}
 
       token = self.load_token()
@@ -22,6 +21,13 @@ class Bot(commands.Bot):
          print(f"Created MusicHandler for server: {guild_id}")
       
       return self.__musicHandlers[guild_id]
+
+   async def on_voice_state_update(self, member, before, after):
+      if member == self.user:
+         if before.channel and not after.channel:
+            await self.__musicHandlers[member.guild.id].setStopFlag(True)
+         elif not before.channel and after.channel:
+            await self.__musicHandlers[member.guild.id].setStopFlag(True)
 
    async def on_ready(self):
       print(f'Бот вошел в систему как {self.user.name}')
