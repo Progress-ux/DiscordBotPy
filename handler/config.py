@@ -11,6 +11,7 @@ YDL_OPTIONS = {
     'format': 'bestaudio/best',
     'noplaylist': True,
     'quiet': True,
+    'nocheckcertificate': True,
     'ignoreerrors': True, 
     'cachedir': False,
     "http_headers": {
@@ -19,11 +20,11 @@ YDL_OPTIONS = {
         "Accept-Language": "en-us,en;q=0.5",
         "Sec-Fetch-Mode": "navigate"
     },
-    # "extractor_args": {
-    #     "youtube": {
-    #         "player_client": ["default"]
-    #     }
-    # },
+    "extractor_args": {
+        "youtube": {
+            "player_client": ["default", 'android','web']
+        }
+    },
 }
 
 FFMPEG_OPTIONS = {
