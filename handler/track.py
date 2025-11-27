@@ -5,6 +5,7 @@ class Track:
       self.__url = ""
       self.__stream_url = ""
       self.__duration = 0
+      self.__thumbnail = None
       self.__BEGIN_URL = "https://youtu.be/"
    
    def setTitle(self, _title: str):
@@ -36,7 +37,13 @@ class Track:
 
    def getDuration(self):
       return self.__duration
-   
+
+   def setThumbnail(self, _thumbnail):
+      self.__thumbnail = _thumbnail
+
+   def getThumbnail(self):
+      return self.__thumbnail
+
    def getBeginUrl(self):
       return self.__BEGIN_URL
    

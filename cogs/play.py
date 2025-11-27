@@ -12,8 +12,8 @@ class PlayCommand(commands.Cog):
    async def play(self, interaction: discord.Interaction, url: str):
       if not interaction.user.voice:
          await interaction.response.send_message(
-               content="You are not in a voice channel.",
-               ephemeral=True
+            content="You are not in a voice channel.",
+            ephemeral=True
          )
          return
       
@@ -36,12 +36,31 @@ class PlayCommand(commands.Cog):
       
       await musicHandler.addTrack(track)
 
-      minutes = track.getDuration() // 60
-      seconds = track.getDuration() % 60
-      
-      response = f"**Title:** {track.getTitle()}\n**Artist:** {track.getAuthor()}\n**Duration:** {minutes}:{seconds:02d}\n**Queue positions:** {await musicHandler.sizeQueue()}"
+      duration = track.getDuration()
+      if duration:
+         m, s = divmod(duration, 60)
+         h, m = divmod(m, 60)
+         if h:
+            duration_str = f"{h}:{m:02d}:{s:02d}"
+         else:
+            duration_str = f"{m}:{s:02d}"
+      else:
+         duration_str = "-"
 
-      await interaction.followup.send(content=response, ephemeral=False)
+      
+      embed = discord.Embed(
+         title=track.getTitle(),
+         url=track.getUrl(),
+         color=0x5865F2
+      )
+      embed.add_field(name="Author", value=track.getAuthor() or "Unknow", inline=True)
+      embed.add_field(name="Duration", value=duration_str or "-", inline=True)
+      embed.add_field(name="Added", value=f"<@{interaction.user.id}>", inline=False)
+
+      if track.getThumbnail():
+         embed.set_thumbnail(url=track.getThumbnail())
+
+      await interaction.followup.send(embed=embed)
 
       if interaction.guild.voice_client:
          voice = interaction.guild.voice_client

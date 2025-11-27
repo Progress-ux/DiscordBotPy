@@ -97,6 +97,7 @@ class MusicHandler:
          track.setAuthor(info.get("uploader", "Unknown author"))
          track.setDuration(int(info.get("duration", 0)))
          track.setStreamUrl(info.get("url", ""))
+         track.setThumbnail(info.get("thumbnail"))
          track.setUrl(track.getBeginUrl() + info.get("id", ""))
          return track
 
