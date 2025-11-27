@@ -11,7 +11,7 @@ class MusicHandler:
    Handles music playback logic, queue management, history tracking, and YouTube info extraction
    for a Discord bot.
    """
-   def __init__(self):
+   def __init__(self, bot):
       """
       Initializes the MusicHandler with empty queue/history and control flags set to False.
       """
@@ -24,6 +24,7 @@ class MusicHandler:
       self.__skipFlag = False
       self.__backFlag = False
 
+      self.__bot = bot
    def setBackFlag(self, flag: bool):
       """
       Sets the flag to signal the player to go back to the previous track.
@@ -181,13 +182,13 @@ class MusicHandler:
       """
       (Placeholder) Updates the stream URL for a given track if it has expired.
       """
-      pass
+      return
 
    async def __updateInfo(self, track: Track):
       """
       (Internal Placeholder) Intended for updating track info if needed.
       """
-      pass
+      return
 
    async def extractInfo(self, url: str) -> Track:
       """ 
@@ -236,11 +237,10 @@ class MusicHandler:
             return # Stop playback if no history available
 
          await self.updateWorkingStreamLink(await self.getBackTrack())
-
-
-      if self.__skipFlag:
+      else:
          self.__skipFlag = False
-         if await self.isQueueEmpty():
+
+         if self.isQueueEmpty():
             return # Stop playback if nothing new to play
 
          await self.updateWorkingStreamLink(await self.getNextTrack())
@@ -263,7 +263,7 @@ class MusicHandler:
       try:
          source = discord.FFmpegPCMAudio(track.getStreamUrl(), **FFMPEG_OPTIONS)
          voice.play(source, after=lambda e: asyncio.run_coroutine_threadsafe(
-            self.player(voice), self.bot.loop # Callback to advance the player state
+            self.player(voice), self.__bot.loop # Callback to advance the player state
          ) if voice and voice.is_connected() and not self.__stopFlag else None)
       except Exception as e:
          print(f"Error during audio playback: {e}")

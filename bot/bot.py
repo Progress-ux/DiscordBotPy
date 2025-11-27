@@ -38,7 +38,7 @@ class Bot(commands.Bot):
          The MusicHandler instance for the specified guild.
       """
       if guild_id not in self.__musicHandlers:
-         self.__musicHandlers[guild_id] = MusicHandler()
+         self.__musicHandlers[guild_id] = MusicHandler(self)
          print(f"Created MusicHandler for server: {guild_id}")
       
       return self.__musicHandlers[guild_id]
