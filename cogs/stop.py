@@ -2,12 +2,12 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 
-class SkipCommand(commands.Cog):
+class StopCommand(commands.Cog):
    def __init__(self, bot):
       self.bot = bot
 
-   @app_commands.command(name="skip", description="Skips current track.")
-   async def skip(self, interaction: discord.Interaction):
+   @app_commands.command(name="stop", description="Stops playback.")
+   async def stop(self, interaction: discord.Interaction):
        # Ensure the user is in a voice channel before proceeding
       if not interaction.user.voice:
          await interaction.response.send_message(
@@ -19,20 +19,21 @@ class SkipCommand(commands.Cog):
       # Get the specific MusicHandler instance associated with this server (guild)
       guild_id = interaction.guild.id
       musicHandler = await self.bot.getMusicHandler(guild_id)
-      
-      if musicHandler.isQueueEmpty():
+
+      voice = interaction.guild.voice_client
+
+      if not voice.is_playing() or not musicHandler.isPlaying():
          await interaction.response.send_message(
-            content="Queue is empty. I'm skipping the command.",
+            content="Nothing is playing now.",
             ephemeral=True # Only the user sees this message
          )
          return
-
-      musicHandler.setSkipFlag(True)
       
-      voice = interaction.guild.voice_client
+      musicHandler.setStopFlag(True)
       voice.stop()
+
       await interaction.response.send_message(
-         content="Audio skipped.",
+         content="Audio stopped.",
       )
 
 # Required setup function for Discord Cogs
@@ -40,4 +41,4 @@ async def setup(bot):
    """
    Registers the SkipCommand cog with the bot.
    """
-   await bot.add_cog(SkipCommand(bot))
+   await bot.add_cog(StopCommand(bot))

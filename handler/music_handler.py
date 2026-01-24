@@ -1,8 +1,7 @@
 from collections import deque
 from .track import Track
-from .config import YDL_OPTIONS, FFMPEG_OPTIONS
-import re
-import yt_dlp
+from .config import FFMPEG_OPTIONS
+from utils.utils import updateWorkingStreamLink
 import asyncio
 import discord
 
@@ -18,6 +17,7 @@ class MusicHandler:
       self.__current_track = Track()
       self.__queue = deque()
       self.__history = deque()
+      self.__is_playing = False
 
       # Control flags for stop, skip, and back actions
       self.__stopFlag = False
@@ -42,6 +42,15 @@ class MusicHandler:
          True if the back flag is set, False otherwise.
       """
       return self.__backFlag
+   
+   def isPlaying(self) -> bool:
+      """
+      Checks if audio is currently playing
+
+      Returns:
+         True if audio plays or False if playback has ended.
+      """
+      return self.__is_playing
    
    def setSkipFlag(self, flag: bool):
       """
@@ -118,7 +127,7 @@ class MusicHandler:
       """
       return len(self.__history)
    
-   async def getCurrentTrack(self) -> Track:
+   def getCurrentTrack(self) -> Track:
       """
       Retrieves the current track. 
       If the current track is empty, attempts to get the next track from the queue.
@@ -127,10 +136,10 @@ class MusicHandler:
          The current Track object or None if the queue is empty.
       """
       if self.__current_track.empty():
-         self.__current_track = await self.getNextTrack()
+         self.__current_track = self.getNextTrack()
       return self.__current_track
 
-   async def getNextTrack(self) -> Track | None:
+   def getNextTrack(self) -> Track | None:
       """
       Moves the current track to history and selects the next track from the queue.
 
@@ -142,13 +151,13 @@ class MusicHandler:
          return None
       
       # Move the current track to history before updating
-      if self.__current_track is not None:
+      if not self.__current_track.empty():
          self.__history.append(self.__current_track)
 
       self.__current_track = self.__queue.popleft()
       return self.__current_track
    
-   async def getBackTrack(self) -> Track | None:
+   def getBackTrack(self) -> Track | None:
       """
       Moves the current track back to the queue and selects the previous track from history.
 
@@ -160,65 +169,11 @@ class MusicHandler:
          return None
       
       # Move the current track back to the front of the queue
-      if self.__current_track is not None:
+      if not self.__current_track.empty():
          self.__queue.append(self.__current_track)
 
       self.__current_track = self.__history.pop()
       return self.__current_track
-   
-   async def isValidUrl(self, url: str) -> bool:
-      """
-      Validates if the provided string is a valid URL using a basic regex pattern.
-
-      Args:
-         url: The string to validate.
-
-      Returns:
-         True if the string matches the URL pattern, False otherwise.
-      """
-      return bool(re.compile(r"^https://[^\s]+$").match(url))
-   
-   async def updateWorkingStreamLink(self, track: Track):
-      """
-      (Placeholder) Updates the stream URL for a given track if it has expired.
-      """
-      return
-
-   async def __updateInfo(self, track: Track):
-      """
-      (Internal Placeholder) Intended for updating track info if needed.
-      """
-      return
-
-   async def extractInfo(self, url: str) -> Track:
-      """ 
-      Extracts detailed information (title, author, duration, stream_url, etc.) 
-      from a given URL using yt-dlp without downloading the file.
-
-      Args:
-         url: The link to the video/stream.
-         
-      Raises:
-         Exception: If yt-dlp returns an empty information dictionary.
-
-      Returns:
-         A populated Track object with all relevant metadata.
-      """
-      with yt_dlp.YoutubeDL(YDL_OPTIONS) as ydl:
-         info = ydl.extract_info(url, download=False)
-         
-         if not info:
-            raise Exception("yt-dlp returned empty info dictionary")
-
-         track = Track()
-         track.setTitle(info.get("title", "Unknown track"))         
-         track.setAuthor(info.get("uploader", "Unknown author"))
-         track.setDuration(int(info.get("duration", 0)))
-         track.setStreamUrl(info.get("url", ""))
-         track.setThumbnail(info.get("thumbnail"))
-         # Constructs the full display URL from the base URL and video ID
-         track.setUrl(track.getBeginUrl() + info.get("id", "")) 
-         return track
 
    async def player(self, voice: discord.VoiceProtocol):
       """
@@ -230,23 +185,32 @@ class MusicHandler:
       Args:
          voice: The Discord voice client needed to pass to `__play` for audio transmission.
       """
+      self.__is_playing = True
+
+      if self.__stopFlag:
+         self.__stopFlag = False
+         self.__is_playing = False
+         return
+
       if self.__backFlag:
          self.__backFlag = False
 
          if self.isHistoryEmpty():
+            self.__is_playing = False
             return # Stop playback if no history available
 
-         await self.updateWorkingStreamLink(await self.getBackTrack())
+         await updateWorkingStreamLink(self.getBackTrack())
       else:
          self.__skipFlag = False
 
          if self.isQueueEmpty():
+            self.__is_playing = False
             return # Stop playback if nothing new to play
 
-         await self.updateWorkingStreamLink(await self.getNextTrack())
+         await updateWorkingStreamLink(self.getNextTrack())
 
       # Get the current track and start playback
-      await self.__play(track=await self.getCurrentTrack(), voice=voice)
+      await self.__play(track=self.getCurrentTrack(), voice=voice)
 
 
    async def __play(self, track: Track, voice: discord.VoiceProtocol):

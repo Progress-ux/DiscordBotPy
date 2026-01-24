@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 from handler.track import Track
+from utils.utils import extractInfo, isValidUrl, createEmbed
 
 class PlayCommand(commands.Cog):
    """
@@ -47,13 +48,13 @@ class PlayCommand(commands.Cog):
       # --- 2. Validate and Extract Track Info ---
 
       # Check if the provided string looks like a valid URL
-      if not await musicHandler.isValidUrl(url):
+      if not await isValidUrl(url):
          await interaction.followup.send(content="Incorrect video link", ephemeral=True)
          return
       
       try:
          # Use the MusicHandler to fetch track metadata from the URL (e.g., via yt-dlp)
-         track = await musicHandler.extractInfo(url)
+         track = await extractInfo(url)
       except Exception as e:
          # Handle potential errors during information extraction (e.g., video not found/private)
          await interaction.followup.send(content=f"Error: {e}")
@@ -64,32 +65,12 @@ class PlayCommand(commands.Cog):
       # Add the newly extracted track object to the queue
       await musicHandler.addTrack(track)
 
-      # Format the duration nicely (HH:MM:SS) for the embed message
-      duration = track.getDuration()
-      if duration:
-         m, s = divmod(duration, 60)
-         h, m = divmod(m, 60)
-         if h:
-            duration_str = f"{h}:{m:02d}:{s:02d}"
-         else:
-            duration_str = f"{m}:{s:02d}"
-      else:
-         duration_str = "-"
-
       # Create a rich embed message to confirm the track was added
-      embed = discord.Embed(
-         title=track.getTitle(),
-         url=track.getUrl(),
-         color=0x5865F2
-      )
-      embed.add_field(name="Author", value=track.getAuthor() or "Unknown", inline=True)
-      embed.add_field(name="Duration", value=duration_str or "-", inline=True)
+      embed = createEmbed(track=track)
+
       # Mention the user who added the song
       embed.add_field(name="Added", value=f"<@{interaction.user.id}>", inline=False) 
-
-      if track.getThumbnail():
-         embed.set_thumbnail(url=track.getThumbnail())
-
+      
       # Send the confirmation message in the channel
       await interaction.followup.send(embed=embed)
 
@@ -103,7 +84,7 @@ class PlayCommand(commands.Cog):
          voice = await interaction.user.voice.channel.connect()
 
       # If music is already actively playing (the queue loop is running), we just added to the queue, so we return.
-      if voice.is_playing():
+      if voice.is_playing() or musicHandler.isPlaying():
          return
       
       # If nothing was playing, start the playback loop using the MusicHandler's player method
