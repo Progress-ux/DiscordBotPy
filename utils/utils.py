@@ -3,6 +3,7 @@ import re
 import yt_dlp
 import discord
 from handler.config import YDL_OPTIONS, YDL_OPTIONS_FROM_TITLE
+import httpx
 
 def createEmbed(track: Track) -> discord.Embed:
    # Format the duration nicely (HH:MM:SS) for the embed message
@@ -58,15 +59,44 @@ async def isValidUrl(url: str) -> bool:
    
 async def updateWorkingStreamLink(track: Track):
    """
-   (Placeholder) Updates the stream URL for a given track if it has expired.
+   Checks and updates the audio stream for a given track if it has expired.
    """
-   return
+   is_valid = False
+    
+   if track.getStreamUrl():
+      try:
+         async with httpx.AsyncClient() as client:
+            # We use HEAD so as not to download the entire audio file
+            response = await client.head(track.getStreamUrl(), timeout=5.0)
+            is_valid = response.status_code == 200
+      except Exception:
+         is_valid = False
 
-async def __updateInfo(track: Track):
+   if not is_valid:
+      track.setStreamUrl(await __updateInfo(track.getUrl()))  
+   
+   return track.getStreamUrl()
+
+async def __updateInfo(url: str):
    """
-   (Internal Placeholder) Intended for updating track info if needed.
+   Retrieves stream link
+   
+   Args:
+      url: The link to the video. 
+   
+   Raises:
+      Exception: If yt-dlp returns an empty information dictionary.
+
+   Returns:
+      Link to audio stream
    """
-   return
+   with yt_dlp.YoutubeDL(YDL_OPTIONS) as ydl:
+      info = ydl.extract_info(url, download=False)
+      
+      if not info:
+         raise Exception("yt-dlp returned empty info dictionary")
+   
+      return info.get("url", "")
 
 async def extractInfoByUrl(url: str) -> Track:
       """ 
@@ -74,7 +104,7 @@ async def extractInfoByUrl(url: str) -> Track:
       from a given URL using yt-dlp without downloading the file.
 
       Args:
-         url: The link to the video/stream.
+         url: The link to the video.
          
       Raises:
          Exception: If yt-dlp returns an empty information dictionary.
