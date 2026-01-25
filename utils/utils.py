@@ -2,7 +2,7 @@ from handler.track import Track
 import re
 import yt_dlp
 import discord
-from handler.config import YDL_OPTIONS
+from handler.config import YDL_OPTIONS, YDL_OPTIONS_FROM_TITLE
 
 def createEmbed(track: Track) -> discord.Embed:
    # Format the duration nicely (HH:MM:SS) for the embed message
@@ -68,7 +68,7 @@ async def __updateInfo(track: Track):
    """
    return
 
-async def extractInfo(url: str) -> Track:
+async def extractInfoByUrl(url: str) -> Track:
       """ 
       Extracts detailed information (title, author, duration, stream_url, etc.) 
       from a given URL using yt-dlp without downloading the file.
@@ -97,3 +97,32 @@ async def extractInfo(url: str) -> Track:
          # Constructs the full display URL from the base URL and video ID
          track.setUrl(track.getBeginUrl() + info.get("id", "")) 
          return track
+      
+async def extractInfoByTitle(title: str) -> Track: 
+   """ 
+      Retrieves detailed information (title, author, duration, stream_url, etc.) 
+      by given name using yt-dlp without downloading the file.
+
+      Args:
+         title: Video title.
+         
+      Raises:
+         Exception: If yt-dlp returns an empty information dictionary.
+
+      Returns:
+         A populated Track object with all relevant metadata.
+      """
+   with yt_dlp.YoutubeDL(YDL_OPTIONS_FROM_TITLE) as ydl:
+      info = (ydl.extract_info(f"ytsearch:{title}", download=False))['entries'][0]
+      if not info:
+         raise Exception("yt-dlp returned empty info dictionary")
+      
+      track = Track()
+      track.setTitle(info.get("title", "Unknown track"))         
+      track.setAuthor(info.get("uploader", "Unknown author"))
+      track.setDuration(int(info.get("duration", 0)))
+      track.setStreamUrl(info.get("url", ""))
+      track.setThumbnail(info.get("thumbnail"))
+      # Constructs the full display URL from the base URL and video ID
+      track.setUrl(track.getBeginUrl() + info.get("id", "")) 
+      return track

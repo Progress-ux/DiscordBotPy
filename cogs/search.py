@@ -2,9 +2,9 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 from handler.track import Track
-from utils.utils import extractInfoByUrl, isValidUrl, createEmbed
+from utils.utils import extractInfoByTitle, createEmbed
 
-class PlayCommand(commands.Cog):
+class SearchCommand(commands.Cog):
    """
    A Discord bot cog that handles the '/play' slash command.
    This command allows users to add music tracks to a guild's queue and start playback.
@@ -15,11 +15,11 @@ class PlayCommand(commands.Cog):
       """
       self.bot = bot
 
-   @app_commands.command(name="play", description="Play audio.")
-   @app_commands.describe(url="The song to play (URL).")
-   async def play(self, interaction: discord.Interaction, url: str):
+   @app_commands.command(name="search", description="Play audio.")
+   @app_commands.describe(title="The song to play (Name).")
+   async def search(self, interaction: discord.Interaction, title: str):
       """
-      The main handler for the /play slash command.
+      The main handler for the /search slash command.
 
       Args:
           interaction: The Discord interaction object representing the command invocation.
@@ -44,17 +44,10 @@ class PlayCommand(commands.Cog):
       
       # Ensure playback is not explicitly stopped if a new command is issued
       await musicHandler.setStopFlag(False)
-
-      # --- 2. Validate and Extract Track Info ---
-
-      # Check if the provided string looks like a valid URL
-      if not await isValidUrl(url):
-         await interaction.followup.send(content="Incorrect video link", ephemeral=True)
-         return
       
       try:
          # Use the MusicHandler to fetch track metadata from the URL (e.g., via yt-dlp)
-         track = await extractInfoByUrl(url)
+         track = await extractInfoByTitle(title)
       except Exception as e:
          # Handle potential errors during information extraction (e.g., video not found/private)
          await interaction.followup.send(content=f"Error: {e}")
@@ -95,4 +88,4 @@ async def setup(bot):
    """
    Registers the PlayCommand cog with the bot.
    """
-   await bot.add_cog(PlayCommand(bot))
+   await bot.add_cog(SearchCommand(bot))
