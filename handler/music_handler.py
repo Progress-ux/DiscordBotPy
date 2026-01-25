@@ -199,7 +199,7 @@ class MusicHandler:
             self.__is_playing = False
             return # Stop playback if no history available
 
-         await updateWorkingStreamLink(self.getBackTrack())
+         self.__current_track.setStreamUrl(await updateWorkingStreamLink(self.getBackTrack()))
       else:
          self.__skipFlag = False
 
@@ -207,7 +207,7 @@ class MusicHandler:
             self.__is_playing = False
             return # Stop playback if nothing new to play
 
-         await updateWorkingStreamLink(self.getNextTrack())
+         self.__current_track.setStreamUrl(await updateWorkingStreamLink(self.getNextTrack()))
 
       # Get the current track and start playback
       await self.__play(track=self.getCurrentTrack(), voice=voice)
