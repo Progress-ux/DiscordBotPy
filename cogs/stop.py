@@ -29,7 +29,7 @@ class StopCommand(commands.Cog):
          )
          return
       
-      musicHandler.setStopFlag(True)
+      await musicHandler.setStopFlag(True)
       voice.stop()
 
       await interaction.response.send_message(
