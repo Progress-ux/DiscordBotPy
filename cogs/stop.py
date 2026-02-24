@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
+from handler.music_handler import MusicHandler
 
 class StopCommand(commands.Cog):
    def __init__(self, bot):
@@ -18,18 +19,18 @@ class StopCommand(commands.Cog):
       
       # Get the specific MusicHandler instance associated with this server (guild)
       guild_id = interaction.guild.id
-      musicHandler = await self.bot.getMusicHandler(guild_id)
+      musicHandler: MusicHandler = await self.bot.getMusicHandler(guild_id)
 
       voice = interaction.guild.voice_client
 
-      if not voice.is_playing() or not musicHandler.isPlaying():
+      if not voice.is_playing() or not musicHandler.is_playing:
          await interaction.response.send_message(
             content="Nothing is playing now.",
             ephemeral=True # Only the user sees this message
          )
          return
       
-      await musicHandler.setStopFlag(True)
+      musicHandler.stop_flag = True
       voice.stop()
 
       await interaction.response.send_message(

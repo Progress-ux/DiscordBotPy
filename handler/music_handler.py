@@ -1,6 +1,7 @@
 from collections import deque
 from .track import Track
 from .config import FFMPEG_OPTIONS
+from .queue_manager import QueueManager
 from utils.utils import updateWorkingStreamLink
 import asyncio
 import discord
@@ -14,166 +15,60 @@ class MusicHandler:
       """
       Initializes the MusicHandler with empty queue/history and control flags set to False.
       """
-      self.__current_track = Track()
-      self.__queue = deque()
-      self.__history = deque()
-      self.__is_playing = False
+      self.__queue_manager = QueueManager()
+      self.__is_playing: bool = False
 
       # Control flags for stop, skip, and back actions
-      self.__stopFlag = False
-      self.__skipFlag = False
-      self.__backFlag = False
+      self.__stop_flag: bool = False
+      self.__skip_flag: bool = False
+      self.__back_flag: bool = False
 
       self.__bot = bot
-   def setBackFlag(self, flag: bool):
-      """
-      Sets the flag to signal the player to go back to the previous track.
 
-      Args:
-         flag: The boolean value to set the flag to (usually True).
-      """
-      self.__backFlag = flag
-
-   def isBackFlag(self) -> bool:
-      """
-      Checks if the back flag is currently set.
-
-      Returns:
-         True if the back flag is set, False otherwise.
-      """
-      return self.__backFlag
-   
-   def isPlaying(self) -> bool:
-      """
-      Checks if audio is currently playing
-
-      Returns:
-         True if audio plays or False if playback has ended.
-      """
-      return self.__is_playing
-   
-   def setSkipFlag(self, flag: bool):
-      """
-      Sets the flag to signal the player to skip to the next track.
-
-      Args:
-         flag: The boolean value to set the flag to (usually True).
-      """
-      self.__skipFlag = flag
-
-   def isSkipFlag(self) -> bool:
-      """
-      Checks if the skip flag is currently set.
-
-      Returns:
-         True if the skip flag is set, False otherwise.
-      """
-      return self.__skipFlag
-   
-   async def setStopFlag(self, flag: bool):
-      """
-      Sets the flag to signal the player to stop all playback.
-
-      Args:
-         flag: The boolean value to set the flag to (usually True).
-      """
-      self.__stopFlag = flag
-
-   def isStopFlag(self) -> bool:
-      """
-      Checks if the stop flag is currently set.
-
-      Returns:
-         True if the stop flag is set, False otherwise.
-      """
-      return self.__stopFlag
-
-   async def addTrack(self, track: Track):
+   def add_track(self, track: Track) -> None:
       """
       Adds a new track to the end of the playback queue.
 
       Args:
          track: The Track object to add.
       """
-      self.__queue.append(track)
+      self.__queue_manager.add_track(track)
 
-   def isQueueEmpty(self) -> bool:
-      """
-      Checks if the main playback queue is empty.
-
-      Returns:
-         True if the queue has no tracks, False otherwise.
-      """
-      return len(self.__queue) == 0
+   @property
+   def queue_empty(self) -> bool:
+      return self.__queue_manager.queue_empty
    
-   def isHistoryEmpty(self) -> bool:
-      """
-      Checks if the playback history is empty.
+   @property
+   def history_empty(self) -> bool:
+      return self.__queue_manager.history_empty
 
-      Returns:
-         True if the history has no tracks, False otherwise.
-      """
-      return len(self.__history) == 0
+   @property
+   def is_playing(self) -> bool:
+      return self.__is_playing
+
+   @property
+   def back_flag(self) -> bool:
+      return self.__back_flag
    
-   def sizeQueue(self) -> int:
-      """
-      Returns the number of tracks currently in the queue.
-      """
-      return len(self.__queue)
-
-   def sizeHistory(self) -> int:
-      """
-      Returns the number of tracks currently in the history.
-      """
-      return len(self.__history)
+   @back_flag.setter
+   def back_flag(self, flag: bool):
+      self.__back_flag = flag
    
-   def getCurrentTrack(self) -> Track:
-      """
-      Retrieves the current track. 
-      If the current track is empty, attempts to get the next track from the queue.
-
-      Returns:
-         The current Track object or None if the queue is empty.
-      """
-      if self.__current_track.empty():
-         self.__current_track = self.getNextTrack()
-      return self.__current_track
-
-   def getNextTrack(self) -> Track | None:
-      """
-      Moves the current track to history and selects the next track from the queue.
-
-      Returns:
-         The next Track object from the queue, or None if the queue is empty.
-      """
-      if not self.__queue:
-         self.__current_track = None
-         return None
-      
-      # Move the current track to history before updating
-      if not self.__current_track.empty():
-         self.__history.append(self.__current_track)
-
-      self.__current_track = self.__queue.popleft()
-      return self.__current_track
+   @property
+   def skip_flag(self) -> bool:
+      return self.__skip_flag
    
-   def getBackTrack(self) -> Track | None:
-      """
-      Moves the current track back to the queue and selects the previous track from history.
+   @skip_flag.setter
+   def skip_flag(self, flag: bool):
+      self.__skip_flag = flag
 
-      Returns:
-         The previous Track object from history, or None if history is empty.
-      """
-      if not self.__history:
-         self.__current_track = None
-         return None
-      
-      # Move the current track back to the front of the queue
-      if not self.__current_track.empty():
-         self.__queue.append(self.__current_track)
+   @property
+   def stop_flag(self) -> bool:
+      return self.__stop_flag
 
-      self.__current_track = self.__history.pop()
-      return self.__current_track
+   @stop_flag.setter
+   def stop_flag(self, flag: bool):
+     self.__stop_flag = flag
 
    async def player(self, voice: discord.VoiceProtocol):
       """
@@ -187,30 +82,29 @@ class MusicHandler:
       """
       self.__is_playing = True
 
-      if self.__stopFlag:
-         self.__stopFlag = False
+      if self.__stop_flag:
+         self.__stop_flag = False
          self.__is_playing = False
          return
+      
+      if self.__back_flag:
+         self.__back_flag = False
 
-      if self.__backFlag:
-         self.__backFlag = False
-
-         if self.isHistoryEmpty():
+         if self.__queue_manager.history_empty:
             self.__is_playing = False
             return # Stop playback if no history available
-
-         self.__current_track.setStreamUrl(await updateWorkingStreamLink(self.getBackTrack()))
+         
+         self.__queue_manager.current_track = await updateWorkingStreamLink(self.__queue_manager.back_track())
       else:
-         self.__skipFlag = False
+         self.__skip_flag = False
 
-         if self.isQueueEmpty():
+         if self.__queue_manager.queue_empty:
             self.__is_playing = False
             return # Stop playback if nothing new to play
-
-         self.__current_track.setStreamUrl(await updateWorkingStreamLink(self.getNextTrack()))
+         self.__queue_manager.current_track = await updateWorkingStreamLink(self.__queue_manager.next_track())
 
       # Get the current track and start playback
-      await self.__play(track=self.getCurrentTrack(), voice=voice)
+      await self.__play(track=self.__queue_manager.current_track, voice=voice)
 
 
    async def __play(self, track: Track, voice: discord.VoiceProtocol):
@@ -224,11 +118,11 @@ class MusicHandler:
          track: The current track object to retrieve the stream_url from.
          voice: The Discord voice channel object for sending audio.
       """
+      
       try:
-         source = discord.FFmpegPCMAudio(track.getStreamUrl(), **FFMPEG_OPTIONS)
+         source = discord.FFmpegPCMAudio(track.stream_url, **FFMPEG_OPTIONS)
          voice.play(source, after=lambda e: asyncio.run_coroutine_threadsafe(
             self.player(voice), self.__bot.loop # Callback to advance the player state
-         ) if voice and voice.is_connected() and not self.__stopFlag else None)
+         ) if voice and voice.is_connected() and not self.__stop_flag else None)
       except Exception as e:
          print(f"Error during audio playback: {e}")
-

@@ -3,6 +3,7 @@ from discord.ext import commands
 from discord import app_commands
 from handler.track import Track
 from utils.utils import extractInfoByUrl, isValidUrl, createEmbed
+from handler.music_handler import MusicHandler
 
 class PlayCommand(commands.Cog):
    """
@@ -51,10 +52,10 @@ class PlayCommand(commands.Cog):
       
       # Get the specific MusicHandler instance associated with this server (guild)
       guild_id = interaction.guild.id
-      musicHandler = await self.bot.getMusicHandler(guild_id)
+      musicHandler: MusicHandler = await self.bot.getMusicHandler(guild_id)
       
       # Ensure playback is not explicitly stopped if a new command is issued
-      await musicHandler.setStopFlag(False)
+      musicHandler.stop_flag = False
 
       # --- 2. Validate and Extract Track Info ---
 
@@ -65,7 +66,7 @@ class PlayCommand(commands.Cog):
       
       try:
          # Use the MusicHandler to fetch track metadata from the URL (e.g., via yt-dlp)
-         track = await extractInfoByUrl(url)
+         track: Track = await extractInfoByUrl(url)
       except Exception as e:
          # Handle potential errors during information extraction (e.g., video not found/private)
          await interaction.followup.send(content=f"Error: {e}")
@@ -74,7 +75,7 @@ class PlayCommand(commands.Cog):
       # --- 3. Add to Queue and Send Confirmation ---
 
       # Add the newly extracted track object to the queue
-      await musicHandler.addTrack(track)
+      musicHandler.add_track(track)
 
       # Create a rich embed message to confirm the track was added
       embed = createEmbed(track=track)
@@ -88,7 +89,7 @@ class PlayCommand(commands.Cog):
       # --- 4. Start Playback ---
 
       # If music is already actively playing (the queue loop is running), we just added to the queue, so we return.
-      if voice.is_playing() or musicHandler.isPlaying():
+      if voice.is_playing() or musicHandler.is_playing:
          return
       
       # If nothing was playing, start the playback loop using the MusicHandler's player method

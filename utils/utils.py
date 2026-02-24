@@ -7,20 +7,20 @@ import httpx
 
 def createEmbed(track: Track) -> discord.Embed:
    # Format the duration nicely (HH:MM:SS) for the embed message
-   duration_str = __formatDuration(track.getDuration())
+   duration_str = __formatDuration(track.duration)
 
    # Create a rich embed message to confirm the track was added
    embed = discord.Embed(
-      title=track.getTitle(),
-      url=track.getUrl(),
+      title=track.title,
+      url=track.url,
       color=0x5865F2
    )
-   embed.add_field(name="Author", value=track.getAuthor() or "Unknown", inline=True)
+   embed.add_field(name="Author", value=track.author or "Unknown", inline=True)
    embed.add_field(name="Duration", value=duration_str or "-", inline=True)
    
 
-   if track.getThumbnail():
-      embed.set_thumbnail(url=track.getThumbnail())
+   if track.thumbnail:
+      embed.set_thumbnail(url=track.thumbnail)
 
    return embed
 
@@ -57,11 +57,20 @@ async def isValidUrl(url: str) -> bool:
       """
       return bool(re.compile(r"^https://[^\s]+$").match(url))
    
-async def updateWorkingStreamLink(track: Track):
-    stream_url = track.getStreamUrl()
-    is_valid = False
-    
-    if stream_url:
+async def updateWorkingStreamLink(track: Track) -> str:
+   """
+   Проверяет стрим ссылку на работоспособность. Если ссылка недоступна, то обновляет
+
+   Args:
+      track: Трек, который нужно обновить
+
+   Returns:
+      Если ссылка работоспособна, то она же и вернется, иначе вернется обновленная ссылка
+   """
+   stream_url = track.stream_url
+   is_valid = False
+   
+   if stream_url:
       try:
          headers = {
             "Range": "bytes=0-0" # Запрашиваем только первый байт
@@ -74,11 +83,11 @@ async def updateWorkingStreamLink(track: Track):
          print(f"Validation error: {e}")
          is_valid = False
 
-    if not is_valid:
-        new_url = await __updateInfo(track.getUrl())
-        track.setStreamUrl(new_url)
-    
-    return track.getStreamUrl()
+   if not is_valid:
+      track.stream_url = await __updateInfo(track.url)
+      return track
+   
+   return track
 
 async def __updateInfo(url: str):
    """
@@ -122,13 +131,13 @@ async def extractInfoByUrl(url: str) -> Track:
             raise Exception("yt-dlp returned empty info dictionary")
 
          track = Track()
-         track.setTitle(info.get("title", "Unknown track"))         
-         track.setAuthor(info.get("uploader", "Unknown author"))
-         track.setDuration(int(info.get("duration", 0)))
-         track.setStreamUrl(info.get("url", ""))
-         track.setThumbnail(info.get("thumbnail"))
+         track.title = info.get("title", "Unknown track")     
+         track.author = info.get("uploader", "Unknown author")
+         track.duration = int(info.get("duration", 0))
+         track.stream_url = info.get("url", "")
+         track.thumbnail = info.get("thumbnail")
          # Constructs the full display URL from the base URL and video ID
-         track.setUrl(track.getBeginUrl() + info.get("id", "")) 
+         track.url = (track.begin_url + info.get("id", "")) 
          return track
       
 async def extractInfoByTitle(title: str) -> Track: 
@@ -152,11 +161,11 @@ async def extractInfoByTitle(title: str) -> Track:
          raise Exception("yt-dlp returned empty info dictionary")
       
       track = Track()
-      track.setTitle(info.get("title", "Unknown track"))         
-      track.setAuthor(info.get("uploader", "Unknown author"))
-      track.setDuration(int(info.get("duration", 0)))
-      track.setStreamUrl(info.get("url", ""))
-      track.setThumbnail(info.get("thumbnail"))
+      track.title = info.get("title", "Unknown track")     
+      track.author = info.get("uploader", "Unknown author")
+      track.duration = int(info.get("duration", 0))
+      track.stream_url = info.get("url", "")
+      track.thumbnail = info.get("thumbnail")
       # Constructs the full display URL from the base URL and video ID
-      track.setUrl(track.getBeginUrl() + info.get("id", "")) 
+      track.url = (track.begin_url + info.get("id", "")) 
       return track

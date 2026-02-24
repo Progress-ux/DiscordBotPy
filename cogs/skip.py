@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
+from handler.music_handler import MusicHandler
 
 class SkipCommand(commands.Cog):
    def __init__(self, bot):
@@ -18,16 +19,16 @@ class SkipCommand(commands.Cog):
       
       # Get the specific MusicHandler instance associated with this server (guild)
       guild_id = interaction.guild.id
-      musicHandler = await self.bot.getMusicHandler(guild_id)
+      musicHandler: MusicHandler = await self.bot.getMusicHandler(guild_id)
       
-      if musicHandler.isQueueEmpty():
+      if musicHandler.queue_empty:
          await interaction.response.send_message(
             content="Queue is empty. I'm skipping the command.",
             ephemeral=True # Only the user sees this message
          )
          return
 
-      musicHandler.setSkipFlag(True)
+      musicHandler.skip_flag = True
       
       voice = interaction.guild.voice_client
       voice.stop()

@@ -1,52 +1,28 @@
 class Track:
-   def __init__(self):
-      self.__title = ""
-      self.__author = ""
-      self.__url = ""
+   def __init__(self, title="", author="", url="", duration=0, thumbnail=None):
+      self.title = title
+      self.author = author
+      self.url = url
+      self.duration = duration
+      self.thumbnail = thumbnail
       self.__stream_url = ""
-      self.__duration = 0
-      self.__thumbnail = None
       self.__BEGIN_URL = "https://youtu.be/"
    
-   def setTitle(self, _title: str):
-      self.__title = _title
-
-   def getTitle(self):
-      return self.__title
-
-   def setAuthor(self, _author: str):
-      self.__author = _author
-
-   def getAuthor(self):
-      return self.__author
-   
-   def setUrl(self, _url: str):
-      self.__url = _url
-
-   def getUrl(self):
-      return self.__url
-   
-   def setStreamUrl(self, _stream_url: str):
-      self.__stream_url = _stream_url
-
-   def getStreamUrl(self):
+   @property
+   def stream_url(self) -> str:
       return self.__stream_url
    
-   def setDuration(self, _duration: int):
-      self.__duration = _duration
+   @stream_url.setter
+   def stream_url(self, value: str) -> None:
+      if not value.startswith("http"):
+         raise ValueError("Invalid stream url")
+      self.__stream_url = value
 
-   def getDuration(self):
-      return self.__duration
-
-   def setThumbnail(self, _thumbnail):
-      self.__thumbnail = _thumbnail
-
-   def getThumbnail(self):
-      return self.__thumbnail
-
-   def getBeginUrl(self):
+   @property
+   def begin_url(self) -> str:
       return self.__BEGIN_URL
    
-   def empty(self):
+   @property
+   def empty(self) -> bool:
       return self.__stream_url == ""
    
