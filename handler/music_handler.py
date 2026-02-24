@@ -13,7 +13,7 @@ class MusicHandler:
    """
    def __init__(self, bot):
       """
-      Initializes the MusicHandler with empty queue/history and control flags set to False.
+      Initializes the MusicHandler with empty queue_manager and control flags set to False.
       """
       self.__queue_manager = QueueManager()
       self.__is_playing: bool = False

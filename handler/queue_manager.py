@@ -20,36 +20,18 @@ class QueueManager:
 
    @property
    def queue_empty(self) -> bool:
-      """
-      Checks if the main playback queue is empty.
-
-      Returns:
-         True if the queue has no tracks, False otherwise.
-      """
       return len(self.__queue) == 0
    
    @property
    def history_empty(self) -> bool:
-      """
-      Checks if the playback history is empty.
-
-      Returns:
-         True if the history has no tracks, False otherwise.
-      """
       return len(self.__history) == 0
    
    @property
    def queue_size(self) -> int:
-      """
-      Returns the number of tracks currently in the queue.
-      """
       return len(self.__queue)
 
    @property
    def history_size(self) -> int:
-      """
-      Returns the number of tracks currently in the history.
-      """
       return len(self.__history)
    
    @property
