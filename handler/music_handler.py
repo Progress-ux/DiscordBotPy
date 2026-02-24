@@ -1,7 +1,7 @@
 from collections import deque
 from .track import Track
 from .config import FFMPEG_OPTIONS
-from .queue_manager import QueueManager
+from .queue_manager import QueueManager, RepeatMode
 from utils.utils import updateWorkingStreamLink
 import asyncio
 import discord
@@ -22,7 +22,6 @@ class MusicHandler:
       self.__stop_flag: bool = False
       self.__skip_flag: bool = False
       self.__back_flag: bool = False
-      self.__repeat_flag: bool = False
 
       self.__bot = bot
 
@@ -35,6 +34,16 @@ class MusicHandler:
       """
       self.__queue_manager.add_track(track)
 
+   def toggle_repeat_mode(self, target_mode: RepeatMode) -> RepeatMode:
+      current = self.__queue_manager.repeat_mode
+
+      if current == target_mode:
+         self.__queue_manager.repeat_mode = RepeatMode.NONE
+      else:
+         self.__queue_manager.repeat_mode = target_mode
+
+      return self.__queue_manager.repeat_mode
+
    @property
    def queue_empty(self) -> bool:
       return self.__queue_manager.queue_empty
@@ -46,14 +55,6 @@ class MusicHandler:
    @property
    def is_playing(self) -> bool:
       return self.__is_playing
-
-   @property
-   def repeat_flag(self) -> bool:
-      return self.__repeat_flag
-
-   @repeat_flag.setter
-   def repeat_flag(self, flag: bool):
-      self.__repeat_flag = flag
 
    @property
    def back_flag(self) -> bool:
@@ -97,36 +98,29 @@ class MusicHandler:
          self.__queue_manager.clear_current()
          return
       
+      track = None
+
       if self.__skip_flag:
          self.__skip_flag = False
-         if self.__queue_manager.queue_empty:
-            self.__is_playing = False
-            self.__queue_manager.clear_current()
-            return # Stop playback if nothing new to play
-         self.__queue_manager.current_track = await updateWorkingStreamLink(self.__queue_manager.next_track())
+         track = self.__queue_manager.next_track(force_skip=True)
 
       elif self.__back_flag:
          self.__back_flag = False
-
-         if self.__queue_manager.history_empty:
-            self.__is_playing = False
-            self.__queue_manager.clear_current()
-            return # Stop playback if no history available
-         
-         self.__queue_manager.current_track = await updateWorkingStreamLink(self.__queue_manager.back_track())
-
-      elif self.__repeat_flag:
-         self.__queue_manager.current_track = await updateWorkingStreamLink(self.__queue_manager.current_track)
+         track = self.__queue_manager.back_track()
 
       else:
-         if self.__queue_manager.queue_empty:
-            self.__is_playing = False
-            self.__queue_manager.clear_current()
-            return # Stop playback if nothing new to play
-         self.__queue_manager.current_track = await updateWorkingStreamLink(self.__queue_manager.next_track())
+         track = self.__queue_manager.next_track()
 
-      # Get the current track and start playback
-      await self.__play(track=self.__queue_manager.current_track, voice=voice)
+      if not track or track.empty:
+         self.__is_playing = False
+         return
+
+      try:
+         self.__queue_manager.current_track = await updateWorkingStreamLink(track)
+         # Get the current track and start playback
+         await self.__play(track=self.__queue_manager.current_track, voice=voice)
+      except Exception as e:
+         print(f"Error updating track: {e}")
 
 
    async def __play(self, track: Track, voice: discord.VoiceProtocol):

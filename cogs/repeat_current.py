@@ -2,15 +2,16 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 from handler.music_handler import MusicHandler
+from handler.queue_manager import RepeatMode
 
-class RepeatCommand(commands.Cog):
+class RepeatCurrentCommand(commands.Cog):
    def __init__(self, bot):
       """
       Initializes the cog with the bot instance.
       """
       self.bot = bot
 
-   @app_commands.command(name="repeat", description="Enables/disables repeating the current track")
+   @app_commands.command(name="repeat_one", description="Enables/disables repeating the current track")
    async def leave(self, interaction: discord.Interaction):
       if not interaction.user.voice:
          await interaction.response.send_message(
@@ -23,12 +24,10 @@ class RepeatCommand(commands.Cog):
       guild_id = interaction.guild.id
       musicHandler: MusicHandler = await self.bot.getMusicHandler(guild_id)
       
-      musicHandler.repeat_flag = not musicHandler.repeat_flag
-      
-      message = "Auto repeat of current track is enabled" if musicHandler.repeat_flag else "Auto repeat of current track is disabled"
+      new_mode = musicHandler.toggle_repeat_mode(RepeatMode.ONE)
 
       await interaction.response.send_message(
-         content=message,
+         content=new_mode.status_message,
       )
 
 # Required setup function for Discord Cogs
@@ -36,4 +35,4 @@ async def setup(bot):
    """
    Registers the PlayCommand cog with the bot.
    """
-   await bot.add_cog(RepeatCommand(bot))
+   await bot.add_cog(RepeatCurrentCommand(bot))

@@ -1,6 +1,20 @@
 from collections import deque
-
 from handler.track import Track
+from enum import Enum, auto
+
+class RepeatMode(Enum):
+   NONE = auto()
+   ONE = auto()
+   ALL = auto()
+
+   @property
+   def status_message(self) -> str:
+      messages = {
+         RepeatMode.NONE: "Auto repeat is disabled",
+         RepeatMode.ONE: "Auto repeat of current track is enabled.",
+         RepeatMode.ALL: "Auto repeat of current queue is enabled."
+      }
+      return messages[self]
 
 class QueueManager:
 
@@ -8,6 +22,7 @@ class QueueManager:
       self.__current_track = Track()
       self.__queue = deque()
       self.__history = deque()
+      self.__repeat_mode = RepeatMode.NONE
 
    def add_track(self, track: Track) -> None:
       """
@@ -17,6 +32,14 @@ class QueueManager:
          track: The Track object to add.
       """
       self.__queue.append(track)
+
+   @property
+   def repeat_mode(self) -> RepeatMode:
+      return self.__repeat_mode
+   
+   @repeat_mode.setter
+   def repeat_mode(self, mode: RepeatMode):
+      self.__repeat_mode = mode
 
    @property
    def queue_empty(self) -> bool:
@@ -51,21 +74,26 @@ class QueueManager:
    def current_track(self, track: Track):
       self.__current_track = track
 
-   def next_track(self) -> Track | None:
+   def next_track(self, force_skip: bool = False) -> Track | None:
       """
       Moves the current track to history and selects the next track from the queue.
 
       Returns:
          The next Track object from the queue, or None if the queue is empty.
       """
+      if self.__repeat_mode == RepeatMode.ONE and not self.__current_track.empty and not force_skip:
+         return self.__current_track
+      
+      if not self.__current_track.empty:
+         if self.__repeat_mode == RepeatMode.ALL:
+            self.__queue.append(self.__current_track)
+         else:
+            self.__history.append(self.__current_track)
+      
       if not self.__queue:
-         self.__current_track = None
+         self.__current_track = Track()
          return None
       
-      # Move the current track to history before updating
-      if not self.__current_track.empty:
-         self.__history.append(self.__current_track)
-
       self.__current_track = self.__queue.popleft()
       return self.__current_track
    
@@ -77,17 +105,13 @@ class QueueManager:
          The previous Track object from history, or None if history is empty.
       """
       if not self.__history:
-         self.__current_track = None
+         self.__current_track = Track()
          return None
       
       # Move the current track back to the front of the queue
       if not self.__current_track.empty:
          self.__queue.append(self.__current_track)
-
+      
       self.__current_track = self.__history.pop()
       return self.__current_track
    
-   def clear_current(self) -> None:
-      if self.__current_track and not self.__current_track.empty:
-         self.__history.append(self.__current_track)
-         self.__current_track = Track()
