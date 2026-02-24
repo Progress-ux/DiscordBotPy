@@ -50,7 +50,6 @@ YDL_OPTIONS_FROM_TITLE = {
             "player_client": ["default", 'android','web']
         }
     },
-    "default_search": "ytsearch",
 }
 
 FFMPEG_OPTIONS = {

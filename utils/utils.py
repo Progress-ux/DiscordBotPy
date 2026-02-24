@@ -58,24 +58,27 @@ async def isValidUrl(url: str) -> bool:
       return bool(re.compile(r"^https://[^\s]+$").match(url))
    
 async def updateWorkingStreamLink(track: Track):
-   """
-   Checks and updates the audio stream for a given track if it has expired.
-   """
-   is_valid = False
+    stream_url = track.getStreamUrl()
+    is_valid = False
     
-   if track.getStreamUrl():
+    if stream_url:
       try:
-         async with httpx.AsyncClient() as client:
-            # We use HEAD so as not to download the entire audio file
-            response = await client.head(track.getStreamUrl(), timeout=5.0)
-            is_valid = response.status_code == 200
-      except Exception:
+         headers = {
+            "Range": "bytes=0-0" # Запрашиваем только первый байт
+         }
+         async with httpx.AsyncClient(follow_redirects=True) as client:
+               response = await client.get(stream_url, headers=headers, timeout=5.0)
+               # 200 или 206 означают успех
+               is_valid = response.status_code in (200, 206)
+      except Exception as e:
+         print(f"Validation error: {e}")
          is_valid = False
 
-   if not is_valid:
-      track.setStreamUrl(await __updateInfo(track.getUrl()))  
-   
-   return track.getStreamUrl()
+    if not is_valid:
+        new_url = await __updateInfo(track.getUrl())
+        track.setStreamUrl(new_url)
+    
+    return track.getStreamUrl()
 
 async def __updateInfo(url: str):
    """
@@ -144,6 +147,7 @@ async def extractInfoByTitle(title: str) -> Track:
       """
    with yt_dlp.YoutubeDL(YDL_OPTIONS_FROM_TITLE) as ydl:
       info = (ydl.extract_info(f"ytsearch:{title}", download=False))['entries'][0]
+      
       if not info:
          raise Exception("yt-dlp returned empty info dictionary")
       

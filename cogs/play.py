@@ -35,8 +35,19 @@ class PlayCommand(commands.Cog):
          )
          return
       
+      # Check if the bot is already connected to a voice channel in this guild
+      if not interaction.guild.voice_client:
+         # If not connected, display a message
+         await interaction.response.send_message(
+            content="I'm not in the voice channel. Use the /join command.",
+            ephemeral=True # Only the user sees this message
+         )
+         return
+      
       # Defer the response because processing the URL might take time (API call)
       await interaction.response.defer()
+
+      voice = interaction.guild.voice_client
       
       # Get the specific MusicHandler instance associated with this server (guild)
       guild_id = interaction.guild.id
@@ -74,14 +85,7 @@ class PlayCommand(commands.Cog):
       # Send the confirmation message in the channel
       await interaction.followup.send(embed=embed)
 
-      # --- 4. Connect and Start Playback ---
-
-      # Check if the bot is already connected to a voice channel in this guild
-      if interaction.guild.voice_client:
-         voice = interaction.guild.voice_client
-      else:
-         # If not connected, connect to the user's current voice channel
-         voice = await interaction.user.voice.channel.connect()
+      # --- 4. Start Playback ---
 
       # If music is already actively playing (the queue loop is running), we just added to the queue, so we return.
       if voice.is_playing() or musicHandler.isPlaying():
