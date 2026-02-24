@@ -138,7 +138,7 @@ class MusicHandler:
       try:
          source = discord.FFmpegPCMAudio(track.stream_url, **FFMPEG_OPTIONS)
          voice.play(source, after=lambda e: asyncio.run_coroutine_threadsafe(
-            self.player(voice), self.__bot.loop # Callback to advance the player state
-         ) if voice and voice.is_connected() and not self.__stop_flag else None)
+            self.player(voice), self.__bot.loop
+         ))
       except Exception as e:
          print(f"Error during audio playback: {e}")
