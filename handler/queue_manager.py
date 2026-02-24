@@ -74,6 +74,11 @@ class QueueManager:
    def current_track(self, track: Track):
       self.__current_track = track
 
+   def clear_current(self):
+      if not self.__current_track.empty:
+         self.__history.append(self.__current_track)
+      self.__current_track = Track()
+
    def next_track(self, force_skip: bool = False) -> Track | None:
       """
       Moves the current track to history and selects the next track from the queue.
