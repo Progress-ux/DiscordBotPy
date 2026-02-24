@@ -22,6 +22,7 @@ class MusicHandler:
       self.__stop_flag: bool = False
       self.__skip_flag: bool = False
       self.__back_flag: bool = False
+      self.__repeat_flag: bool = False
 
       self.__bot = bot
 
@@ -45,6 +46,14 @@ class MusicHandler:
    @property
    def is_playing(self) -> bool:
       return self.__is_playing
+
+   @property
+   def repeat_flag(self) -> bool:
+      return self.__repeat_flag
+
+   @repeat_flag.setter
+   def repeat_flag(self, flag: bool):
+      self.__repeat_flag = flag
 
    @property
    def back_flag(self) -> bool:
@@ -85,21 +94,34 @@ class MusicHandler:
       if self.__stop_flag:
          self.__stop_flag = False
          self.__is_playing = False
+         self.__queue_manager.clear_current()
          return
       
-      if self.__back_flag:
+      if self.__skip_flag:
+         self.__skip_flag = False
+         if self.__queue_manager.queue_empty:
+            self.__is_playing = False
+            self.__queue_manager.clear_current()
+            return # Stop playback if nothing new to play
+         self.__queue_manager.current_track = await updateWorkingStreamLink(self.__queue_manager.next_track())
+
+      elif self.__back_flag:
          self.__back_flag = False
 
          if self.__queue_manager.history_empty:
             self.__is_playing = False
+            self.__queue_manager.clear_current()
             return # Stop playback if no history available
          
          self.__queue_manager.current_track = await updateWorkingStreamLink(self.__queue_manager.back_track())
-      else:
-         self.__skip_flag = False
 
+      elif self.__repeat_flag:
+         self.__queue_manager.current_track = await updateWorkingStreamLink(self.__queue_manager.current_track)
+
+      else:
          if self.__queue_manager.queue_empty:
             self.__is_playing = False
+            self.__queue_manager.clear_current()
             return # Stop playback if nothing new to play
          self.__queue_manager.current_track = await updateWorkingStreamLink(self.__queue_manager.next_track())
 

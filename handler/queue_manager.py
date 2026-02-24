@@ -86,3 +86,8 @@ class QueueManager:
 
       self.__current_track = self.__history.pop()
       return self.__current_track
+   
+   def clear_current(self) -> None:
+      if self.__current_track and not self.__current_track.empty:
+         self.__history.append(self.__current_track)
+         self.__current_track = Track()

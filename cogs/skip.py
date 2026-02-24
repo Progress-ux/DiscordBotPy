@@ -35,6 +35,9 @@ class SkipCommand(commands.Cog):
       await interaction.response.send_message(
          content="Audio skipped.",
       )
+      if not voice.is_playing() and not musicHandler.is_playing:
+         # If nothing was playing, start the playback loop using the MusicHandler's player method
+         await musicHandler.player(voice=voice)
 
 # Required setup function for Discord Cogs
 async def setup(bot):
