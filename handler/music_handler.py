@@ -30,6 +30,9 @@ class MusicHandler:
    
    def get_queue(self) -> list:
       return self.__queue_manager.queue
+   
+   def get_history(self) -> list:
+      return self.__queue_manager.history
 
    def add_track(self, track: Track) -> None:
       """

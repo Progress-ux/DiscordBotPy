@@ -80,6 +80,10 @@ class QueueManager:
    @property
    def queue(self) -> list:
       return list(self.__queue)
+   
+   @property
+   def history(self) -> list:
+      return list(self.__history)
 
    def clear_current(self):
       if not self.__current_track.empty:
