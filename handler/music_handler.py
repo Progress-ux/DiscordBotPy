@@ -25,6 +25,12 @@ class MusicHandler:
 
       self.__bot = bot
 
+   def get_current_track(self) -> Track | None:
+      return self.__queue_manager.get_current_track_for_embed()
+   
+   def get_queue(self) -> list:
+      return self.__queue_manager.queue
+
    def add_track(self, track: Track) -> None:
       """
       Adds a new track to the end of the playback queue.

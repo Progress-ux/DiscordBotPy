@@ -24,6 +24,43 @@ def createEmbed(track: Track) -> discord.Embed:
 
    return embed
 
+def createQueueEmbed(current_track: Track, queue: list[Track]):
+   embed = discord.Embed(title="Queue", color=0x5865F2)
+
+   if not current_track or current_track.empty:
+      embed.description = "Nothing is playing now.\n"
+   else: 
+      embed.description = f"**Currently playing:**\n🚀 [{current_track.title}]({current_track.url}) `[{__formatDuration(current_track.duration)}]`\n"
+      if current_track.thumbnail:
+         embed.set_thumbnail(url=current_track.thumbnail)
+
+   if not queue:
+      embed.add_field(name="Next in the list:", value="Queue is empty", inline=False)
+   else:
+      total_seconds = sum(t.duration for t in queue)
+      total_duration_str = __formatDuration(total_seconds)
+
+      display_queue = queue[:10]
+      lines = []
+
+      for i, t in enumerate(display_queue):
+         dur = __formatDuration(t.duration)
+         title = t.title[:50] + "..." if len(t.title) > 53 else t.title
+         lines.append(f"`{i+1}.` [{title}]({t.url}) `[{dur}]`")
+
+      queue_str = "\n".join(lines)
+
+      if len(queue) > 10:
+         queue_str += f"\n\n*...and another {len(queue) - 10} tracks in the queue*"
+
+      embed.add_field(
+         name=f"Next on the list (Total: {total_duration_str}):", 
+         value=queue_str, 
+         inline=False
+      )
+
+   return embed
+
 def __formatDuration(duration: int) -> str:
    """
    Formats the video duration as: hh:mm:ss or mm:ss if the video is less than an hour

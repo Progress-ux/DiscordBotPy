@@ -70,9 +70,16 @@ class QueueManager:
          self.__current_track = self.next_track()
       return self.__current_track
    
+   def get_current_track_for_embed(self) -> Track | None:
+      return self.__current_track
+   
    @current_track.setter
    def current_track(self, track: Track):
       self.__current_track = track
+
+   @property
+   def queue(self) -> list:
+      return list(self.__queue)
 
    def clear_current(self):
       if not self.__current_track.empty:
