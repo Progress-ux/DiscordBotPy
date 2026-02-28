@@ -3,6 +3,7 @@ import discord
 from discord.ext import commands
 import os
 from handler.music_handler import MusicHandler 
+from cogs.locales.locale_manager import LocaleManager
 
 class Bot(commands.Bot):
    """
@@ -18,6 +19,9 @@ class Bot(commands.Bot):
       
       # Dictionary to store a dedicated MusicHandler instance for each Discord server (guild)
       self.__musicHandlers = {}
+
+      # Initialize local manager
+      self.locale_manager = LocaleManager(self)
 
       # Load the bot token securely from the environment file
       token = self.load_token()

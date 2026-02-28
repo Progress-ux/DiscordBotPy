@@ -12,15 +12,15 @@ class LeaveCommand(commands.Cog):
 
    @app_commands.command(name="leave", description="Coming out of the channel")
    async def leave(self, interaction: discord.Interaction):
+      guild_id = interaction.guild.id
       if not interaction.user.voice:
          await interaction.response.send_message(
-            content="You are not in a voice channel.",
+            content=self.bot.locale_manager.get_text(guild_id, "common.not_in_voice"),
             ephemeral=True # Only the user sees this message
          )
          return
       
       # Get the specific MusicHandler instance associated with this server (guild)
-      guild_id = interaction.guild.id
       musicHandler: MusicHandler = await self.bot.getMusicHandler(guild_id)
       
       musicHandler.stop_flag = True
@@ -30,7 +30,7 @@ class LeaveCommand(commands.Cog):
       await voice.disconnect()
       
       await interaction.response.send_message(
-         content="I left the channel",
+         content=self.bot.locale_manager.get_text(guild_id, "leave.left"),
          ephemeral=True
       )
 

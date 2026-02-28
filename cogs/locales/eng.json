@@ -1,0 +1,57 @@
+{
+    "common": {
+        "not_in_voice": "You are not in a voice channel.",
+        "bot_not_in_voice": "I'm not in the voice channel. Use the /join command.",
+        "error": "Error: {error}",
+        "added_by": "Added by"
+    },
+    "join": {
+        "already_in_channel": "I am already in {channel}!",
+        "cannot_join": "The bot can't join your channel!",
+        "joined": "Joined {channel}!"
+    },
+    "leave": {
+        "left": "I left the channel"
+    },
+    "play": {
+        "incorrect_link": "Incorrect video link"
+    },
+    "queue": {
+        "title_queue": "Queue",
+        "title_history": "History",
+        "nothing_playing": "Nothing is playing now.",
+        "currently_playing": "**Currently playing:**",
+        "next_in_list": "Next in the list:",
+        "queue_empty": "Queue is empty",
+        "previous_in_list": "Previous in the list:",
+        "history_empty": "History is empty",
+        "total": "Total",
+        "and_another": "*...and another {count} tracks in the {type}*",
+        "type_queue": "queue",
+        "type_history": "history"
+    },
+    "repeat": {
+        "repeat_disabled": "🔂 Auto repeat is **disabled**",
+        "one_enabled": "🔂 Auto repeat of current track is **enabled.**",
+        "all_enabled": "🔁 Auto repeat of current queue is **enabled.**"
+    },
+    "skip": {
+        "skipped": "⏭️ Audio skipped.",
+        "queue_empty": "Queue is empty. Nothing to skip."
+    },
+    "stop": {
+        "stopped": "⏹️ Audio stopped.",
+        "nothing_playing": "Nothing is playing now."
+    },
+    "back": {
+        "returned": "⏮️ Returned to the previous track.",
+        "history_empty": "History is empty. Can't go back."
+    },
+    "language": {
+        "title": "Language Settings",
+        "current": "Current language",
+        "select": "Select language",
+        "changed": "Language has been changed to {language}",
+        "description": "Choose your preferred language for bot responses"
+    }
+}

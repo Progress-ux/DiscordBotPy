@@ -13,21 +13,22 @@ class RepeatCurrentCommand(commands.Cog):
 
    @app_commands.command(name="repeat_one", description="Enables/disables repeating the current track")
    async def leave(self, interaction: discord.Interaction):
+      guild_id = interaction.guild.id
+      
       if not interaction.user.voice:
          await interaction.response.send_message(
-            content="You are not in a voice channel.",
+            content=self.bot.locale_manager.get_text(guild_id, "common.not_in_voice"), 
             ephemeral=True # Only the user sees this message
          )
          return
       
       # Get the specific MusicHandler instance associated with this server (guild)
-      guild_id = interaction.guild.id
       musicHandler: MusicHandler = await self.bot.getMusicHandler(guild_id)
       
       new_mode = musicHandler.toggle_repeat_mode(RepeatMode.ONE)
 
       await interaction.response.send_message(
-         content=new_mode.status_message,
+         content=self.bot.locale_manager.get_text(guild_id, new_mode.status_message),
       )
 
 # Required setup function for Discord Cogs

@@ -17,20 +17,21 @@ class BackCommand(commands.Cog):
 
    @app_commands.command(name="back", description="Returns to the previous track.")
    async def back(self, interaction: discord.Interaction):
+      guild_id = interaction.guild.id
+
       if not interaction.user.voice:
          await interaction.response.send_message(
-            content="You are not in a voice channel.",
+            content=self.bot.locale_manager.get_text(guild_id, "common.not_in_voice"), 
             ephemeral=True # Only the user sees this message
          )
          return
       
       # Get the specific MusicHandler instance associated with this server (guild)
-      guild_id = interaction.guild.id
       musicHandler: MusicHandler = await self.bot.getMusicHandler(guild_id)
 
       if musicHandler.history_empty:
          await interaction.response.send_message(
-            content="History is empty. I'm skipping the command.",
+            content=self.bot.locale_manager.get_text(guild_id, "back.history_empty"), 
             ephemeral=True # Only the user sees this message
          )
          return
@@ -40,7 +41,7 @@ class BackCommand(commands.Cog):
       voice = interaction.guild.voice_client
       voice.stop()
       await interaction.response.send_message(
-         content="I return to the previous track.",
+         content=self.bot.locale_manager.get_text(guild_id, "back.returned"), 
       )
 
       if not voice.is_playing() and not musicHandler.is_playing:

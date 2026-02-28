@@ -9,21 +9,22 @@ class SkipCommand(commands.Cog):
 
    @app_commands.command(name="skip", description="Skips current track.")
    async def skip(self, interaction: discord.Interaction):
-       # Ensure the user is in a voice channel before proceeding
+      guild_id = interaction.guild.id
+
+      # Ensure the user is in a voice channel before proceeding
       if not interaction.user.voice:
          await interaction.response.send_message(
-            content="You are not in a voice channel.",
+            content=self.bot.locale_manager.get_text(guild_id, "common.not_in_voice"), 
             ephemeral=True # Only the user sees this message
          )
          return
       
       # Get the specific MusicHandler instance associated with this server (guild)
-      guild_id = interaction.guild.id
       musicHandler: MusicHandler = await self.bot.getMusicHandler(guild_id)
       
       if musicHandler.queue_empty:
          await interaction.response.send_message(
-            content="Queue is empty. I'm skipping the command.",
+            content=self.bot.locale_manager.get_text(guild_id, "skip.queue_empty"), 
             ephemeral=True # Only the user sees this message
          )
          return
@@ -33,7 +34,7 @@ class SkipCommand(commands.Cog):
       voice = interaction.guild.voice_client
       voice.stop()
       await interaction.response.send_message(
-         content="Audio skipped.",
+         content=self.bot.locale_manager.get_text(guild_id, "skip.skipped"),
       )
       if not voice.is_playing() and not musicHandler.is_playing:
          # If nothing was playing, start the playback loop using the MusicHandler's player method

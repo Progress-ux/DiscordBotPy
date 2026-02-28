@@ -28,10 +28,11 @@ class PlayCommand(commands.Cog):
       """
       # --- 1. Pre-checks ---
 
+      guild_id = interaction.guild.id
       # Ensure the user is in a voice channel before proceeding
       if not interaction.user.voice:
          await interaction.response.send_message(
-            content="You are not in a voice channel.",
+            content=self.bot.locale_manager.get_text(guild_id, "common.not_in_voice"), 
             ephemeral=True # Only the user sees this message
          )
          return
@@ -40,7 +41,7 @@ class PlayCommand(commands.Cog):
       if not interaction.guild.voice_client:
          # If not connected, display a message
          await interaction.response.send_message(
-            content="I'm not in the voice channel. Use the /join command.",
+            content=self.bot.locale_manager.get_text(guild_id, "common.bot_not_in_voice"), 
             ephemeral=True # Only the user sees this message
          )
          return
@@ -51,7 +52,6 @@ class PlayCommand(commands.Cog):
       voice = interaction.guild.voice_client
       
       # Get the specific MusicHandler instance associated with this server (guild)
-      guild_id = interaction.guild.id
       musicHandler: MusicHandler = await self.bot.getMusicHandler(guild_id)
       
       # Ensure playback is not explicitly stopped if a new command is issued
@@ -61,7 +61,10 @@ class PlayCommand(commands.Cog):
 
       # Check if the provided string looks like a valid URL
       if not await isValidUrl(url):
-         await interaction.followup.send(content="Incorrect video link", ephemeral=True)
+         await interaction.followup.send(
+            content=self.bot.locale_manager.get_text(guild_id, "play.incorrect_link"),
+            ephemeral=True
+         )
          return
       
       try:
@@ -69,7 +72,9 @@ class PlayCommand(commands.Cog):
          track: Track = await extractInfoByUrl(url)
       except Exception as e:
          # Handle potential errors during information extraction (e.g., video not found/private)
-         await interaction.followup.send(content=f"Error: {e}")
+         await interaction.followup.send(
+            content=self.bot.locale_manager.get_text(guild_id, "common.error", error=str(e))
+         )
          return
       
       # --- 3. Add to Queue and Send Confirmation ---
@@ -81,7 +86,11 @@ class PlayCommand(commands.Cog):
       embed = createEmbed(track=track)
 
       # Mention the user who added the song
-      embed.add_field(name="Added", value=f"<@{interaction.user.id}>", inline=False) 
+      embed.add_field(
+         name=self.bot.locale_manager.get_text(guild_id, "common.added_by"), 
+         value=f"<@{interaction.user.id}>", 
+         inline=False
+      ) 
       
       # Send the confirmation message in the channel
       await interaction.followup.send(embed=embed)

@@ -9,8 +9,12 @@ class JoinCommand(commands.Cog):
    @app_commands.command(name="join", description="The bot will join your voice channel.")
    async def join(self, interaction: discord.Interaction):
       try:
+         guild_id = interaction.guild.id
          if not interaction.user.voice:
-            await interaction.response.send_message(content="You are not in a voice channel.", ephemeral=True)
+            await interaction.response.send_message(
+               content=self.bot.locale_manager.get_text(guild_id, "common.not_in_voice"), 
+               ephemeral=True
+            )
             return
 
          channel = interaction.user.voice.channel
@@ -19,14 +23,23 @@ class JoinCommand(commands.Cog):
          if voice_client:
             # If the bot is already in the same channel, send a message and return
             if voice_client.channel == channel:
-               await interaction.response.send_message(content=f"I am already in {channel.name}!", ephemeral=True)
+               await interaction.response.send_message(
+                  content=self.bot.locale_manager.get_text(guild_id, "join.already_in_channel", channel=str(channel.name)), 
+                  ephemeral=True
+               )
             # If the bot is in a different channel, move to the user's channel
             else:
-               await interaction.response.send_message(content=f"The bot can't join your channel!", ephemeral=True)
+               await interaction.response.send_message(
+                  content=self.bot.locale_manager.get_text(guild_id, "join.cannot_join"), 
+                  ephemeral=True
+               )
          else:
             # If the bot is not connected at all, connect to the user's channel
             await channel.connect()
-            await interaction.response.send_message(content=f"Joined {channel.name}!", ephemeral=True)
+            await interaction.response.send_message(
+               content=self.bot.locale_manager.get_text(guild_id, "join.joined", channel=str(channel.name)), 
+               ephemeral=True
+            )
       except Exception as e:
          print(f"Error: {e}")
 

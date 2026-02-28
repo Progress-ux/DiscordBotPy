@@ -10,9 +10,9 @@ class RepeatMode(Enum):
    @property
    def status_message(self) -> str:
       messages = {
-         RepeatMode.NONE: "Auto repeat is disabled",
-         RepeatMode.ONE: "Auto repeat of current track is enabled.",
-         RepeatMode.ALL: "Auto repeat of current queue is enabled."
+         RepeatMode.NONE: "repeat.repeat_disabled",
+         RepeatMode.ONE: "repeat.one_enabled",
+         RepeatMode.ALL: "repeat.all_enabled"
       }
       return messages[self]
 
